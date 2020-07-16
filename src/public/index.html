@@ -1,0 +1,91 @@
+<html>
+  <body>
+    <button id="create">Create user</button>
+    <button id="update">Update user</button>
+    <button id="get">Get users user</button>
+    <button id="get-id">Get user id</button>
+    <button id="delete">Delete user</button>
+
+    <div>
+      <input id="user_id" placeholder="user id" />
+      <input id="name" placeholder="user name" />
+      <input id="surname" placeholder="user surname" />
+    </div>
+
+    <script>
+      const getListButton = document.getElementById("get");
+      const addUserButton = document.getElementById("create");
+      const deleteUserButton = document.getElementById("delete");
+      const updateUserButton = document.getElementById("update");
+
+      const getUserIdButton = document.getElementById("get-id");
+      const userIdInput = document.getElementById("user_id");
+      const nameInput = document.getElementById("name");
+      const surnameInput = document.getElementById("surname");
+
+      getListButton.onclick = () => {
+        fetch("/users")
+          .then(res => res.json())
+          .then(res => console.info(res));
+      };
+
+      addUserButton.onclick = () => {
+        fetch("/users", {
+          method: "post",
+          headers: {
+            "Content-type": "application/json"
+          },
+          body: JSON.stringify({
+            name: "gena",
+            surname: "enakenty",
+            email: "test@test.test"
+          })
+        })
+          .then(res => res.json())
+          .then(res => console.info(res))
+          .then(() => alert("User was added !!!!"));
+      };
+
+      deleteUserButton.onclick = () => {
+        const userId = userIdInput.value;
+
+        fetch(`/users/${userId}`, {
+          method: "delete"
+        })
+          .then(res => res.json())
+          .then(res => console.info(res))
+          .then(() => alert("User was deleted"));
+      };
+
+      getUserIdButton.onclick = () => {
+        const userId = userIdInput.value;
+
+        console.info("click");
+
+        fetch(`/users/${userId}`)
+          .then(res => res.json())
+          .then(res => console.log(res));
+      };
+
+      updateUserButton.onclick = () => {
+        const userId = userIdInput.value;
+        const name = nameInput.value;
+        const surname = surnameInput.value;
+
+        fetch(`/users/${userId}`, {
+          method: "put",
+          headers: {
+            "Content-type": "application/json"
+          },
+          body: JSON.stringify({
+            name,
+            surname
+          })
+        })
+          .then(res => res.json())
+          .then(res => console.log(res))
+          .then(() => alert("Update user done"));
+      };
+    </script>
+  </body>
+</html>
