@@ -1,4 +1,7 @@
 <html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  </head>
   <body>
     <button id="create">Create user</button>
     <button id="update">Update user</button>
@@ -12,6 +15,16 @@
       <input id="surname" placeholder="user surname" />
     </div>
 
+    <div id="users-list">
+      <div v-for="user in users" :key="user.id">
+        {{user._id}} {{ user.name }}
+      </div>
+    </div>
+
+    <div id="user-block">
+      USER {{ user._id }} {{ user.name }}
+    </div>
+
     <script>
       const getListButton = document.getElementById("get");
       const addUserButton = document.getElementById("create");
@@ -23,10 +36,25 @@
       const nameInput = document.getElementById("name");
       const surnameInput = document.getElementById("surname");
 
+      const vueUsers = new Vue({
+        el: "#users-list",
+        data: { users: [] }
+      });
+
+      const vueUser = new Vue({
+        el: "#user-block",
+        data: { user: {} }
+      });
+
+      const users = [];
+
       getListButton.onclick = () => {
         fetch("/users")
           .then(res => res.json())
-          .then(res => console.info(res));
+          .then(res => {
+            console.info(res);
+            vueUsers.users = res.users;
+          });
       };
 
       addUserButton.onclick = () => {
@@ -38,7 +66,8 @@
           body: JSON.stringify({
             name: "gena",
             surname: "enakenty",
-            email: "test@test.test"
+            email: "test@test.test",
+            age: 12
           })
         })
           .then(res => res.json())
@@ -60,11 +89,12 @@
       getUserIdButton.onclick = () => {
         const userId = userIdInput.value;
 
-        console.info("click");
-
         fetch(`/users/${userId}`)
           .then(res => res.json())
-          .then(res => console.log(res));
+          .then(res => {
+            console.log(res);
+            vueUser.user = res.user;
+          });
       };
 
       updateUserButton.onclick = () => {
@@ -79,7 +109,8 @@
           },
           body: JSON.stringify({
             name,
-            surname
+            surname,
+            age: 10
           })
         })
           .then(res => res.json())
