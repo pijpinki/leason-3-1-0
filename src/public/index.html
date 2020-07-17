@@ -1,40 +1,77 @@
 <html>
   <head>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <style>
+      .block {
+        margin-top: 10px;
+        border: 1px black solid;
+      }
+    </style>
   </head>
   <body>
-    <button id="create">Create user</button>
-    <button id="update">Update user</button>
-    <button id="get">Get users user</button>
-    <button id="get-id">Get user id</button>
-    <button id="delete">Delete user</button>
-
-    <div>
-      <input id="user_id" placeholder="user id" />
-      <input id="name" placeholder="user name" />
-      <input id="surname" placeholder="user surname" />
+    <div id="buttons" class="block">
+      <button @click="createHandle">Create user</button>
+      <button @click="updateHandle">Update user</button>
+      <button @click="getListHandle">Get users list</button>
+      <button @click="getUserHandle">Get user</button>
+      <button @click="deleteHandle">Delete user</button>
     </div>
 
-    <div id="users-list">
-      <div v-for="user in users" :key="user.id">
-        {{user._id}} {{ user.name }}
-      </div>
+    <div id="input" class="block">
+      <input v-model="id" placeholder="id" />
+      <input v-model="name" placeholder="name" />
+      <input v-model="surname" placeholder="surname" />
+      <input v-model="email" placeholder="email" />
+      <input v-model="age" placeholder="age" />
     </div>
 
-    <div id="user-block">
+    <div id="users-list" class="block">
+      <div v-if="users.length === 0">Press button to load list</div>
+
+      <table>
+        <thead>
+          <tr>
+            <td>id</td>
+            <td>name</td>
+            <td>surname</td>
+            <td>email</td>
+            <td>age</td>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="user in users" :key="user.id">
+            <td>{{ user._id }}</td>
+            <td>{{ user.name }}</td>
+            <td>{{ user.surname }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.age }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div id="user-block" class="block">
       USER {{ user._id }} {{ user.name }}
     </div>
 
     <script>
-      const getListButton = document.getElementById("get");
-      const addUserButton = document.getElementById("create");
-      const deleteUserButton = document.getElementById("delete");
-      const updateUserButton = document.getElementById("update");
+      const makeRequest = (method, path, data) => {
+        if (method === "get") {
+          return fetch(`${path}?${new URLSearchParams(data)}`).then(res =>
+            res.json()
+          );
+        }
 
-      const getUserIdButton = document.getElementById("get-id");
-      const userIdInput = document.getElementById("user_id");
-      const nameInput = document.getElementById("name");
-      const surnameInput = document.getElementById("surname");
+        return fetch(path, {
+          method,
+          headers: {
+            "Content-type": "application/json"
+          },
+          body: JSON.stringify(data)
+        }).then(res => {
+          res.status === 200 ? res.json() : {};
+        });
+      };
 
       const vueUsers = new Vue({
         el: "#users-list",
@@ -46,77 +83,66 @@
         data: { user: {} }
       });
 
-      const users = [];
+      const vueInput = new Vue({
+        el: "#input",
+        data: {
+          id: "",
+          name: "",
+          surname: "",
+          email: "",
+          age: 0
+        },
 
-      getListButton.onclick = () => {
-        fetch("/users")
-          .then(res => res.json())
-          .then(res => {
-            console.info(res);
-            vueUsers.users = res.users;
-          });
-      };
+        watch: {
+          id(id) {
+            const user = vueUsers.users.find(user => user._id === id);
 
-      addUserButton.onclick = () => {
-        fetch("/users", {
-          method: "post",
-          headers: {
-            "Content-type": "application/json"
+            if (!user) return;
+
+            Object.keys(user).forEach(key => {
+              this[key] = user[key];
+            });
+          }
+        }
+      });
+
+      const vueButtons = new Vue({
+        el: "#buttons",
+
+        methods: {
+          createHandle() {
+            makeRequest("post", "/users", vueInput.$data).then(({ user }) => {
+              vueUsers.users.push(user);
+            });
           },
-          body: JSON.stringify({
-            name: "gena",
-            surname: "enakenty",
-            email: "test@test.test",
-            age: 12
-          })
-        })
-          .then(res => res.json())
-          .then(res => console.info(res))
-          .then(() => alert("User was added !!!!"));
-      };
 
-      deleteUserButton.onclick = () => {
-        const userId = userIdInput.value;
-
-        fetch(`/users/${userId}`, {
-          method: "delete"
-        })
-          .then(res => res.json())
-          .then(res => console.info(res))
-          .then(() => alert("User was deleted"));
-      };
-
-      getUserIdButton.onclick = () => {
-        const userId = userIdInput.value;
-
-        fetch(`/users/${userId}`)
-          .then(res => res.json())
-          .then(res => {
-            console.log(res);
-            vueUser.user = res.user;
-          });
-      };
-
-      updateUserButton.onclick = () => {
-        const userId = userIdInput.value;
-        const name = nameInput.value;
-        const surname = surnameInput.value;
-
-        fetch(`/users/${userId}`, {
-          method: "put",
-          headers: {
-            "Content-type": "application/json"
+          updateHandle() {
+            makeRequest("put", `/users/${vueInput.id}`, vueInput.$data).then(
+              () => this.getListHandle()
+            );
           },
-          body: JSON.stringify({
-            name,
-            surname,
-            age: 10
-          })
-        })
-          .then(res => res.json())
-          .then(res => console.log(res))
-          .then(() => alert("Update user done"));
-      };
+
+          getListHandle() {
+            makeRequest("get", "/users").then(
+              ({ users }) => (vueUsers.users = users)
+            );
+          },
+
+          getUserHandle() {
+            makeRequest("get", `/users/${vueInput.id}`).then(
+              ({ user }) => (vueUser.user = user)
+            );
+          },
+
+          deleteHandle() {
+            makeRequest("delete", `/users/${vueInput.id}`).then(() => {
+              vueUsers.users = vueUsers.users.filter(
+                ({ _id }) => _id !== vueInput.id
+              );
+            });
+          }
+        }
+      });
     </script>
   </body>
 </html>
