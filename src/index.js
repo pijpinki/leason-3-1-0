@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
+const mongoose = require("mongoose");
 const database = require("./database");
 const users = require("./routes/users");
 const comments = require("./routes/comments");
@@ -22,8 +23,12 @@ async function main() {
   });
 
   app.listen(8080, err => {
-    err && console.error("error", err);
-    console.info("Operaion compele");
+    if (err) {
+      console.error("Failed to start web server");
+      return mongoose.connection.close();
+    }
+
+    console.info("Wer server started at port 8080");
   });
 }
 
